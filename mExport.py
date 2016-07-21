@@ -8,6 +8,9 @@ default_account = 'eKONTO'
 default_number = '0'
 default_comment = ''
 default_unit = 'zł'
+atm_mode = 'bankomat'
+transfer_category = 'transfer'
+default_payee = ''
 
 # This lines end sets of data. The list should be updated. Here is how we get it:
 # cat dump.txt | grep -P "^[0-9]+\.[0-9]+\.[0-9]+" -B1 --color=never | grep -P "^[^0-9\-]" | sort | uniq
@@ -18,6 +21,8 @@ known_modes = [
     'Przelew',
     'Płatność kartą'
     ]
+
+atm_pattern = 'Wypłata gotówki'
 
 # Difference between amount and quantity:
 # Basic currency has exchange rate 1:1, so quantity equals amount for it.
@@ -92,13 +97,17 @@ with open(BANK_DUMP_FILE) as f:
     for i, entry in enumerate(entries):
         if not 'payee' in entry:
             entries[i]['payee'] = ''
+        if not 'mode' in entry:
+            entries[i]['mode'] = ''
         if not 'category' in entry:
             entries[i]['category'] = ''
         if not 'comment' in entry:
             entries[i]['comment'] = default_comment
 
-        if 'Wypłata gotówki' in entry['lines']:
-            entries[i]['mode'] = 'bankomat'
+        if atm_mode in entry['lines']:
+            entries[i]['mode'] = atm_mode
+            entries[i]['category'] = transfer_category
+            entries[i]['payee'] = default_payee
 
     print('"date";"account";"number";"mode";"payee";"comment";"quantity";"unit";"amount";"sign";"category"')
     for entry in entries:
