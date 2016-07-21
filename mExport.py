@@ -1,7 +1,5 @@
 import re
 import csv
-#TODO: if not needed, delete it
-import pprint
 
 BANK_DUMP_FILE = 'dump.txt'
 PAYEES_FILE = 'payees.csv'
