@@ -13,7 +13,7 @@ transfer_category = 'transfer'
 default_payee = ''
 
 # This lines end sets of data. The list should be updated. Here is how we get it:
-# cat dump.txt | grep -P "^[0-9]+\.[0-9]+\.[0-9]+" -B1 --color=never | grep -P "^[^0-9\-]" | sort | uniq
+# grep -P "^[0-9]+\.[0-9]+\.[0-9]+" -B1 --color=never dump.txt | grep -P "^[^0-9\-]" | sort | uniq
 known_modes = [
     'Inna operacja',
     'Nierozliczone',
@@ -30,6 +30,8 @@ atm_pattern = 'Wypłata gotówki'
 # amount is a value expressed in basic currency, so it is quantity multiplied
 # by exchange rate.
 
+# Payees are collected like that:
+# grep -P "^[0-9]+\.[0-9]+\.[0-9]+" -A1 --color=never dump.txt | grep -P "^[^0-9\-]" --color=never
 payees_dictionary = list()
 
 with open(PAYEES_FILE, newline='') as csvfile:
