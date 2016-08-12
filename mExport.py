@@ -46,14 +46,8 @@ with open(BANK_DUMP_FILE) as f:
     current_entry['lines'] = list()
 
     for line in f:
-        whites_bgn = re.compile('^[\s]+')
-        line = whites_bgn.sub('', line)
-        whites_end = re.compile('[\s]+$')
-        line = whites_end.sub('', line)
-
-        #TODO: fix this regex and delete two previous ones
-        #whites = re.compile('^[\s]*(.*?)[\s]*$')
-        #line = whites.sub('\0', line)
+        whites = re.compile('[\s]*(.*?)[\s]*\n')
+        line = whites.sub('\g<1>', line)
 
         if '' == line:
             continue
