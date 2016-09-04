@@ -106,7 +106,7 @@ with open(BANK_DUMP_FILE) as f:
             entries[i]['payee'] = default_payee
 
     print('"date";"account";"number";"mode";"payee";"comment";"quantity";"unit";"amount";"sign";"category"')
-    for entry in entries:
+    for entry in entries[::-1]:
         print(  '"' + str(entry['date']) + '";'
               + '"' + default_account + '";'
               + '"' + default_number + '";'
