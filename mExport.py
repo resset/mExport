@@ -70,7 +70,7 @@ with open(BANK_DUMP_FILE) as f:
                 else:
                     sum = zahlen + fraction
                     current_entry['sign'] = '+'
-                current_entry['amount'] = sum
+                current_entry['amount'] = round(sum, 2)
             elif line in known_modes:
                 # Current entry is done, moving to next one.
                 entries.append(current_entry)
