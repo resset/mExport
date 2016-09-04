@@ -1,8 +1,13 @@
+from sys import argv
 import re
 import csv
 
-BANK_DUMP_FILE = 'dump.txt'
-PAYEES_FILE = 'payees.csv'
+if 3 > len(argv):
+    print('Usage:\n\t' + argv[0] + ' payees.csv bank_dump.txt')
+    exit(1)
+else:
+    PAYEES_FILE = argv[1]
+    BANK_DUMP_FILE = argv[2]
 
 default_account = 'eKONTO'
 default_number = '0'
