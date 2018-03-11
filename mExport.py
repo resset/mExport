@@ -17,7 +17,9 @@ atm_mode = 'bankomat'
 transfer_category = 'transfer'
 default_payee = ''
 
-# This lines end sets of data. The list should be updated. Here is how we get it:
+# This lines begins each set of data. The list seems to be complete at least
+# in my case. It won't hurt to check its completeness from time to time.
+# Here is how we get it:
 # grep -P "^[0-9]+\.[0-9]+\.[0-9]+" -B1 --color=never dump.txt | grep -P "^[^0-9\-]" | sort | uniq
 known_modes = [
     'Inna operacja',
@@ -35,7 +37,7 @@ atm_pattern = 'Wypłata gotówki'
 # amount is a value expressed in basic currency, so it is quantity multiplied
 # by exchange rate.
 
-# Payees are collected like that:
+# Payees are collected this way:
 # grep -P "^[0-9]+\.[0-9]+\.[0-9]+" -A1 --color=never dump.txt | grep -P "^[^0-9\-]" --color=never
 payees_dictionary = list()
 
@@ -62,7 +64,12 @@ with open(BANK_DUMP_FILE) as f:
 
             date_pattern = re.compile('^([0-9]{2})\.([0-9]{2})\.([0-9]{4})$')
             amount_pattern = re.compile('^([\-]?[ 0-9]+),([0-9]{2}) PLN$')
-            if date_pattern.match(line):
+            last_line_pattern = re.compile('^Szczegóły ')
+
+            if line in known_modes:
+                # First line is not used
+                pass
+            elif date_pattern.match(line):
                 current_entry['date'] = date_pattern.sub(r'\3-\2-\1', line)
             elif amount_pattern.match(line):
                 ones = amount_pattern.sub(r'\1', line)
@@ -76,7 +83,7 @@ with open(BANK_DUMP_FILE) as f:
                     sum = zahlen + fraction
                     current_entry['sign'] = '+'
                 current_entry['amount'] = round(sum, 2)
-            elif line in known_modes:
+            elif last_line_pattern.match(line):
                 # Current entry is done, moving to next one.
                 entries.append(current_entry)
                 current_entry = dict()
