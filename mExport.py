@@ -104,7 +104,7 @@ with open(BANK_DUMP_FILE) as f:
     # Further processing
     for i, entry in enumerate(entries):
         if not 'payee' in entry or '' == entry['payee']:
-            entries[i]['payee'] = entry['lines'][1].title()
+            entries[i]['payee'] = entry['lines'][2].title()
         if not 'mode' in entry:
             entries[i]['mode'] = ''
         if not 'category' in entry:
