@@ -53,8 +53,8 @@ with open(BANK_DUMP_FILE) as f:
     current_entry['lines'] = list()
 
     for line in f:
-        whites = re.compile('[\s]*(.*?)[\s]*\n')
-        line = whites.sub('\g<1>', line)
+        whites = re.compile(r'[\s]*(.*?)[\s]*\n')
+        line = whites.sub(r'\g<1>', line)
 
         if '' == line:
             continue
@@ -62,9 +62,9 @@ with open(BANK_DUMP_FILE) as f:
             # Saving whole line in case it is needed later.
             current_entry['lines'].append(line)
 
-            date_pattern = re.compile('^([0-9]{2})\.([0-9]{2})\.([0-9]{4})$')
-            amount_pattern = re.compile('^([\-]?[ 0-9]+),([0-9]{2}) PLN$')
-            last_line_pattern = re.compile('^Szczegóły ')
+            date_pattern = re.compile(r'^([0-9]{2})\.([0-9]{2})\.([0-9]{4})$')
+            amount_pattern = re.compile(r'^([\-]?[ 0-9]+),([0-9]{2}) PLN$')
+            last_line_pattern = re.compile(r'^Szczegóły ')
 
             if line in known_modes:
                 # First line is not used
@@ -73,7 +73,7 @@ with open(BANK_DUMP_FILE) as f:
                 current_entry['date'] = date_pattern.sub(r'\3-\2-\1', line)
             elif amount_pattern.match(line):
                 ones = amount_pattern.sub(r'\1', line)
-                whites = re.compile('[\s]+')
+                whites = re.compile(r'[\s]+')
                 zahlen = float(whites.sub('', ones))
                 fraction = float(amount_pattern.sub(r'\2', line)) / 100.0
                 if 0 > zahlen:
