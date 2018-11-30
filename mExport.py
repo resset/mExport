@@ -52,11 +52,13 @@ with open(BANK_DUMP_FILE) as f:
     current_entry = dict()
     current_entry['lines'] = list()
 
+    ignored_lines = ['', 'Ok?']
+
     for line in f:
         whites = re.compile(r'[\s]*(.*?)[\s]*\n')
         line = whites.sub(r'\g<1>', line)
 
-        if '' == line:
+        if line in ignored_lines:
             continue
         else:
             # Saving whole line in case it is needed later.
