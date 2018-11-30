@@ -64,12 +64,10 @@ with open(BANK_DUMP_FILE) as f:
 
             date_pattern = re.compile(r'^([0-9]{2})\.([0-9]{2})\.([0-9]{4})$')
             amount_pattern = re.compile(r'^([\-]?[ 0-9]+),([0-9]{2}) PLN$')
-            last_line_pattern = re.compile(r'^Szczegóły ')
+            details_line_pattern = re.compile(r'^Szczegóły ')
 
-            if line in known_modes:
-                # First line is not used
-                pass
-            elif date_pattern.match(line):
+            if date_pattern.match(line):
+                # First line
                 current_entry['date'] = date_pattern.sub(r'\3-\2-\1', line)
             elif amount_pattern.match(line):
                 ones = amount_pattern.sub(r'\1', line)
@@ -83,8 +81,11 @@ with open(BANK_DUMP_FILE) as f:
                     sum = zahlen + fraction
                     current_entry['sign'] = '+'
                 current_entry['amount'] = round(sum, 2)
-            elif last_line_pattern.match(line):
-                # Current entry is done, moving to next one.
+            elif details_line_pattern.match(line):
+                # Nothing interesting here
+                pass
+            elif line in known_modes:
+                # Last line, current entry is done, moving to next one.
                 entries.append(current_entry)
                 current_entry = dict()
                 current_entry['lines'] = list()
