@@ -6,6 +6,7 @@ import csv
 
 def parse_args():
     """Handle command-line arguments."""
+
     if len(argv) < 3:
         print('Usage:\n\t' + argv[0] + ' payees.csv bank_dump.txt')
         exit(1)
@@ -16,12 +17,28 @@ def parse_args():
         'BANK_DUMP_FILE': argv[2]
     }
 
+def get_payees(filename):
+    """Create payees dictionary out of simple CSV file."""
+
+    # Payees are collected this way:
+    # grep -P "^[0-9]+\.[0-9]+\.[0-9]+" -A1 --color=never dump.txt \
+    # | grep -P "^[^0-9\-]" --color=never
+    payees_dictionary = list()
+
+    with open(filename, newline='') as csvfile:
+        payee_reader = csv.reader(csvfile, delimiter=',')
+        for row in payee_reader:
+            payees_dictionary.append(row)
+
+    return payees_dictionary
+
 def export_operations(files):
     """Disassemble input, create and return CSV content.
 
     Arguments:
     files -- dictionary of constants with file names
     """
+
     operations = ''
     default_account = 'eKONTO'
     default_number = '0'
@@ -50,15 +67,7 @@ def export_operations(files):
     # amount is a value expressed in basic currency, so it is quantity multiplied
     # by exchange rate.
 
-    # Payees are collected this way:
-    # grep -P "^[0-9]+\.[0-9]+\.[0-9]+" -A1 --color=never dump.txt \
-    # | grep -P "^[^0-9\-]" --color=never
-    payees_dictionary = list()
-
-    with open(files['PAYEES_FILE'], newline='') as csvfile:
-        payee_reader = csv.reader(csvfile, delimiter=',')
-        for row in payee_reader:
-            payees_dictionary.append(row)
+    payees_dictionary = get_payees(files['PAYEES_FILE'])
 
     with open(files['BANK_DUMP_FILE']) as dumpfile:
 
