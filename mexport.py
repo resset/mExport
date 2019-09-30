@@ -32,6 +32,28 @@ def get_payees(filename):
 
     return payees_dictionary
 
+def create_csv_content(entries):
+    """Prepare CSV-formatted string with list of entries."""
+
+    default_account = 'eKONTO'
+    default_number = '0'
+    default_unit = 'zł'
+
+    operations = ('"date";"account";"number";"mode";"payee";"comment";'
+                  + '"quantity";"unit";"amount";"sign";"category"\n')
+    for entry in entries[::-1]:
+        operations += ('"' + str(entry['date']) + '";'
+                       + '"' + default_account + '";'
+                       + '"' + default_number + '";'
+                       + '"' + str(entry['mode']) + '";'
+                       + '"' + str(entry['payee']) + '";'
+                       + '"' + str(entry['comment']) + '";'
+                       + '"' + str(entry['amount']) + '";'
+                       + '"' + default_unit + '";'
+                       + '"' + str(entry['amount']) + '";'
+                       + '"' + str(entry['sign']) + '";'
+                       + '"' + str(entry['category']) + '";\n')
+
 def export_operations(files):
     """Disassemble input, create and return CSV content.
 
@@ -39,11 +61,8 @@ def export_operations(files):
     files -- dictionary of constants with file names
     """
 
-    operations = ''
-    default_account = 'eKONTO'
-    default_number = '0'
+    entries = []
     default_comment = ''
-    default_unit = 'zł'
     atm_mode = 'bankomat'
     transfer_category = 'transfer'
     default_payee = ''
@@ -71,7 +90,6 @@ def export_operations(files):
 
     with open(files['BANK_DUMP_FILE']) as dumpfile:
 
-        entries = []
         current_entry = dict()
         current_entry['lines'] = list()
 
@@ -142,21 +160,7 @@ def export_operations(files):
                 entries[i]['category'] = transfer_category
                 entries[i]['payee'] = default_payee
 
-        operations = ('"date";"account";"number";"mode";"payee";"comment";'
-                      + '"quantity";"unit";"amount";"sign";"category"\n')
-        for entry in entries[::-1]:
-            operations += ('"' + str(entry['date']) + '";'
-                           + '"' + default_account + '";'
-                           + '"' + default_number + '";'
-                           + '"' + str(entry['mode']) + '";'
-                           + '"' + str(entry['payee']) + '";'
-                           + '"' + str(entry['comment']) + '";'
-                           + '"' + str(entry['amount']) + '";'
-                           + '"' + default_unit + '";'
-                           + '"' + str(entry['amount']) + '";'
-                           + '"' + str(entry['sign']) + '";'
-                           + '"' + str(entry['category']) + '";\n')
-    return operations
+    return create_csv_content(entries)
 
 if __name__ == '__main__':
     ARGUMENTS = parse_args()
