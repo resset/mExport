@@ -3,18 +3,18 @@ import re
 import csv
 
 def parse_args():
-    if 3 > len(argv):
+    if len(argv) < 3:
         print('Usage:\n\t' + argv[0] + ' payees.csv bank_dump.txt')
         exit(1)
-    else:
-        args = {
-            'PAYEES_FILE': argv[1],
-            'BANK_DUMP_FILE': argv[2]
-        }
-        return args
+        return None
 
-def export_operations(args):
-    operations_csv = ''
+    return {
+        'PAYEES_FILE': argv[1],
+        'BANK_DUMP_FILE': argv[2]
+    }
+
+def export_operations(files):
+    operations = ''
     default_account = 'eKONTO'
     default_number = '0'
     default_comment = ''
@@ -47,12 +47,12 @@ def export_operations(args):
     # | grep -P "^[^0-9\-]" --color=never
     payees_dictionary = list()
 
-    with open(args['PAYEES_FILE'], newline='') as csvfile:
+    with open(files['PAYEES_FILE'], newline='') as csvfile:
         payee_reader = csv.reader(csvfile, delimiter=',')
         for row in payee_reader:
             payees_dictionary.append(row)
 
-    with open(args['BANK_DUMP_FILE']) as f:
+    with open(files['BANK_DUMP_FILE']) as dumpfile:
 
         entries = []
         current_entry = dict()
@@ -65,7 +65,7 @@ def export_operations(args):
         whites_zahlen = re.compile(r'[\s]+')
         details_line_pattern = re.compile(r'^Szczegóły ')
 
-        for line in f:
+        for line in dumpfile:
             line = whites.sub(r'\g<1>', line)
 
             if line in ignored_lines:
@@ -81,13 +81,13 @@ def export_operations(args):
                     ones = amount_pattern.sub(r'\1', line)
                     zahlen = float(whites_zahlen.sub('', ones))
                     fraction = float(amount_pattern.sub(r'\2', line)) / 100.0
-                    if 0 > zahlen:
-                        sum = zahlen - fraction
+                    if zahlen < 0:
+                        amount = zahlen - fraction
                         current_entry['sign'] = '-'
                     else:
-                        sum = zahlen + fraction
+                        amount = zahlen + fraction
                         current_entry['sign'] = '+'
-                    current_entry['amount'] = round(sum, 2)
+                    current_entry['amount'] = round(amount, 2)
                 elif details_line_pattern.match(line):
                     # Nothing interesting here
                     pass
@@ -98,20 +98,20 @@ def export_operations(args):
                     current_entry['lines'] = list()
                 else:
                     for payee_pattern in payees_dictionary:
-                        if 0 < len(payee_pattern):
+                        if payee_pattern:
                             payee_regexp = re.compile('^' + payee_pattern[0] + '.*')
                             if payee_regexp.match(line):
                                 current_entry['payee'] = payee_pattern[1]
-                                if 2 < len(payee_pattern):
+                                if len(payee_pattern) > 2:
                                     current_entry['category'] = payee_pattern[2]
-                                if 3 < len(payee_pattern):
+                                if len(payee_pattern) > 3:
                                     current_entry['mode'] = payee_pattern[3]
-                                if 4 < len(payee_pattern):
+                                if len(payee_pattern) > 4:
                                     current_entry['comment'] = payee_pattern[4]
 
         # Further processing
         for i, entry in enumerate(entries):
-            if not 'payee' in entry or '' == entry['payee']:
+            if not 'payee' in entry or entry['payee'] == '':
                 entries[i]['payee'] = entry['lines'][1]
             if not 'mode' in entry:
                 entries[i]['mode'] = ''
@@ -125,23 +125,23 @@ def export_operations(args):
                 entries[i]['category'] = transfer_category
                 entries[i]['payee'] = default_payee
 
-        operations_csv = ('"date";"account";"number";"mode";"payee";"comment";'
-            + '"quantity";"unit";"amount";"sign";"category"\n')
+        operations = ('"date";"account";"number";"mode";"payee";"comment";'
+                      + '"quantity";"unit";"amount";"sign";"category"\n')
         for entry in entries[::-1]:
-            operations_csv += ('"' + str(entry['date']) + '";'
-                + '"' + default_account + '";'
-                + '"' + default_number + '";'
-                + '"' + str(entry['mode']) + '";'
-                + '"' + str(entry['payee']) + '";'
-                + '"' + str(entry['comment']) + '";'
-                + '"' + str(entry['amount']) + '";'
-                + '"' + default_unit + '";'
-                + '"' + str(entry['amount']) + '";'
-                + '"' + str(entry['sign']) + '";'
-                + '"' + str(entry['category']) + '";\n')
-    return operations_csv
+            operations += ('"' + str(entry['date']) + '";'
+                           + '"' + default_account + '";'
+                           + '"' + default_number + '";'
+                           + '"' + str(entry['mode']) + '";'
+                           + '"' + str(entry['payee']) + '";'
+                           + '"' + str(entry['comment']) + '";'
+                           + '"' + str(entry['amount']) + '";'
+                           + '"' + default_unit + '";'
+                           + '"' + str(entry['amount']) + '";'
+                           + '"' + str(entry['sign']) + '";'
+                           + '"' + str(entry['category']) + '";\n')
+    return operations
 
 if __name__ == '__main__':
-    args = parse_args()
-    operations_csv = export_operations(args)
-    print(operations_csv, end='')
+    ARGUMENTS = parse_args()
+    OPERATIONS_CSV = export_operations(ARGUMENTS)
+    print(OPERATIONS_CSV, end='')
