@@ -35,8 +35,6 @@ def export_operations(args):
         'Płatność kartą'
         ]
 
-    atm_pattern = 'Wypłata gotówki'
-
     # Difference between amount and quantity:
     # Basic currency has exchange rate 1:1, so quantity equals amount for it.
     # quantity is a value in currency specified in unit.
