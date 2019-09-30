@@ -1,8 +1,11 @@
+"""mBank operations importer. Creates files eaten by Skrooge."""
+
 from sys import argv
 import re
 import csv
 
 def parse_args():
+    """Handle command-line arguments."""
     if len(argv) < 3:
         print('Usage:\n\t' + argv[0] + ' payees.csv bank_dump.txt')
         exit(1)
@@ -14,6 +17,11 @@ def parse_args():
     }
 
 def export_operations(files):
+    """Disassemble input, create and return CSV content.
+
+    Arguments:
+    files -- dictionary of constants with file names
+    """
     operations = ''
     default_account = 'eKONTO'
     default_number = '0'
