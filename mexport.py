@@ -54,6 +54,8 @@ def create_csv_content(entries):
                        + '"' + str(entry['sign']) + '";'
                        + '"' + str(entry['category']) + '";\n')
 
+    return operations
+
 def export_operations(files):
     """Disassemble input, create and return CSV content.
 
