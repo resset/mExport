@@ -26,7 +26,8 @@ def export_operations(args):
     # This lines begins each set of data. The list seems to be complete at least
     # in my case. It won't hurt to check its completeness from time to time.
     # Here is how we get it:
-    # grep -P "^[0-9]+\.[0-9]+\.[0-9]+" -B1 --color=never dump.txt | grep -P "^[^0-9\-]" | sort | uniq
+    # grep -P "^[0-9]+\.[0-9]+\.[0-9]+" -B1 --color=never dump.txt \
+    # | grep -P "^[^0-9\-]" | sort | uniq
     known_modes = [
         'Inna operacja',
         'Nierozliczone',
@@ -42,7 +43,8 @@ def export_operations(args):
     # by exchange rate.
 
     # Payees are collected this way:
-    # grep -P "^[0-9]+\.[0-9]+\.[0-9]+" -A1 --color=never dump.txt | grep -P "^[^0-9\-]" --color=never
+    # grep -P "^[0-9]+\.[0-9]+\.[0-9]+" -A1 --color=never dump.txt \
+    # | grep -P "^[^0-9\-]" --color=never
     payees_dictionary = list()
 
     with open(args['PAYEES_FILE'], newline='') as csvfile:
@@ -123,7 +125,8 @@ def export_operations(args):
                 entries[i]['category'] = transfer_category
                 entries[i]['payee'] = default_payee
 
-        operations_csv = '"date";"account";"number";"mode";"payee";"comment";"quantity";"unit";"amount";"sign";"category"\n'
+        operations_csv = ('"date";"account";"number";"mode";"payee";"comment";'
+            + '"quantity";"unit";"amount";"sign";"category"\n')
         for entry in entries[::-1]:
             operations_csv += ('"' + str(entry['date']) + '";'
                 + '"' + default_account + '";'
