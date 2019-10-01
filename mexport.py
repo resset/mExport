@@ -1,21 +1,23 @@
 """mBank operations importer. Creates files eaten by Skrooge."""
 
-from sys import argv
+import sys
 import re
 import csv
+
 
 def parse_args():
     """Handle command-line arguments."""
 
-    if len(argv) < 3:
-        print('Usage:\n\t' + argv[0] + ' payees.csv bank_dump.txt')
+    if len(sys.argv) < 3:
+        print('Usage:\n\t' + sys.argv[0] + ' payees.csv bank_dump.txt')
         exit(1)
         return None
 
     return {
-        'PAYEES_FILE': argv[1],
-        'BANK_DUMP_FILE': argv[2]
+        'PAYEES_FILE': sys.argv[1],
+        'BANK_DUMP_FILE': sys.argv[2]
     }
+
 
 def get_payees(filename):
     """Create payees dictionary out of simple CSV file."""
@@ -23,14 +25,145 @@ def get_payees(filename):
     # Payees are collected this way:
     # grep -P "^[0-9]+\.[0-9]+\.[0-9]+" -A1 --color=never dump.txt \
     # | grep -P "^[^0-9\-]" --color=never
-    payees_dictionary = list()
+    payees = list()
 
     with open(filename, newline='') as csvfile:
         payee_reader = csv.reader(csvfile, delimiter=',')
         for row in payee_reader:
-            payees_dictionary.append(row)
+            payees.append(row)
 
-    return payees_dictionary
+    return payees
+
+
+def group_lines(dump_file_content):
+    """Arrange input dump file lines into groups of separate operation lines."""
+
+    groups = []
+
+    whites = re.compile(r'[\s]*(.*?)[\s]*\n')
+    ignored_lines = ['', 'Ok?']
+    date_pattern = re.compile(r'^([0-9]{2})\.([0-9]{2})\.([0-9]{4})$')
+
+    for line in dump_file_content:
+        line = whites.sub(r'\g<1>', line)
+
+        if line in ignored_lines:
+            continue
+        else:
+            if date_pattern.match(line):
+                groups.append([])
+
+        groups[len(groups) - 1].append(line)
+
+    return groups
+
+
+def search_payee(string, payees):
+    """Searches in current operation data for known payee."""
+
+    payee = ''
+    category = ''
+    mode = ''
+    comment = ''
+    for payee_pattern in payees:
+        if payee_pattern:
+            payee_regexp = re.compile('^' + payee_pattern[0] + '.*')
+            if payee_regexp.match(string):
+                payee = payee_pattern[1]
+                if len(payee_pattern) > 2:
+                    category = payee_pattern[2]
+                if len(payee_pattern) > 3:
+                    mode = payee_pattern[3]
+                if len(payee_pattern) > 4:
+                    comment = payee_pattern[4]
+                # Finish search after first match
+                break
+    return payee, category, mode, comment
+
+
+def extract_operation(group, payees):
+    """Main function that creates operation record."""
+
+    operation = {}
+
+    # This lines ends each set of data. The list seems to be complete at least
+    # in my case. It won't hurt to check its completeness from time to time.
+    # Here is how we get it:
+    # grep -P "^[0-9]+\.[0-9]+\.[0-9]+" -B1 --color=never dump.txt \
+    # | grep -P "^[^0-9\-]" | sort | uniq
+    known_modes = [
+        'Inna operacja',
+        'Nierozliczone',
+        'Operacja gotówkowa',
+        'Przelew',
+        'Płatność kartą'
+    ]
+
+    date_pattern = re.compile(r'^([0-9]{2})\.([0-9]{2})\.([0-9]{4})$')
+    amount_pattern = re.compile(r'^([\-]?[ 0-9]+),([0-9]{2}) PLN$')
+    whites_zahlen = re.compile(r'[\s]+')
+    details_line_pattern = re.compile(r'^Szczegóły ')
+
+    operation['lines'] = []
+
+    operation['payee'], operation['category'], \
+        operation['mode'], operation['comment'] = search_payee(
+            group[1], payees)
+
+    for line in group:
+        operation['lines'].append(line)
+
+        if date_pattern.match(line):
+            # First line
+            operation['date'] = date_pattern.sub(r'\3-\2-\1', line)
+        elif amount_pattern.match(line):
+            ones = amount_pattern.sub(r'\1', line)
+            zahlen = float(whites_zahlen.sub('', ones))
+            fraction = float(amount_pattern.sub(r'\2', line)) / 100.0
+            if zahlen < 0:
+                amount = zahlen - fraction
+                operation['sign'] = '-'
+            else:
+                amount = zahlen + fraction
+                operation['sign'] = '+'
+            operation['amount'] = round(amount, 2)
+        elif details_line_pattern.match(line):
+            # Nothing interesting here for now
+            pass
+        elif line in known_modes:
+            # Last line
+            pass
+        else:
+            # Any other line
+            pass
+    return operation
+
+
+def postprocess_operations(operations):
+    """Perform additional operations that will make output complete."""
+
+    default_comment = ''
+    atm_mode = 'bankomat'
+    transfer_category = 'transfer'
+    default_payee = ''
+
+    for i, operation in enumerate(operations):
+        if not 'payee' in operation or operation['payee'] == '':
+            operations[i]['payee'] = operation['lines'][1]
+        if not 'mode' in operation:
+            operations[i]['mode'] = ''
+        if not 'category' in operation:
+            operations[i]['category'] = ''
+        if not 'comment' in operation:
+            operations[i]['comment'] = default_comment
+
+        if atm_mode in operation['lines']:
+            operations[i]['mode'] = atm_mode
+            operations[i]['category'] = transfer_category
+            operations[i]['payee'] = default_payee
+
+    return operations
+
 
 def create_csv_content(entries):
     """Prepare CSV-formatted string with list of entries."""
@@ -56,31 +189,13 @@ def create_csv_content(entries):
 
     return operations
 
+
 def export_operations(files):
     """Disassemble input, create and return CSV content.
 
     Arguments:
     files -- dictionary of constants with file names
     """
-
-    entries = []
-    default_comment = ''
-    atm_mode = 'bankomat'
-    transfer_category = 'transfer'
-    default_payee = ''
-
-    # This lines begins each set of data. The list seems to be complete at least
-    # in my case. It won't hurt to check its completeness from time to time.
-    # Here is how we get it:
-    # grep -P "^[0-9]+\.[0-9]+\.[0-9]+" -B1 --color=never dump.txt \
-    # | grep -P "^[^0-9\-]" | sort | uniq
-    known_modes = [
-        'Inna operacja',
-        'Nierozliczone',
-        'Operacja gotówkowa',
-        'Przelew',
-        'Płatność kartą'
-        ]
 
     # Difference between amount and quantity:
     # Basic currency has exchange rate 1:1, so quantity equals amount for it.
@@ -90,79 +205,18 @@ def export_operations(files):
 
     payees_dictionary = get_payees(files['PAYEES_FILE'])
 
-    with open(files['BANK_DUMP_FILE']) as dumpfile:
+    entries = []
 
-        current_entry = dict()
-        current_entry['lines'] = list()
+    with open(files['BANK_DUMP_FILE']) as bank_dump:
+        lines_groups = group_lines(bank_dump)
+        for group in lines_groups:
+            entry = extract_operation(group, payees_dictionary)
+            entries.append(entry)
 
-        whites = re.compile(r'[\s]*(.*?)[\s]*\n')
-        ignored_lines = ['', 'Ok?']
-        date_pattern = re.compile(r'^([0-9]{2})\.([0-9]{2})\.([0-9]{4})$')
-        amount_pattern = re.compile(r'^([\-]?[ 0-9]+),([0-9]{2}) PLN$')
-        whites_zahlen = re.compile(r'[\s]+')
-        details_line_pattern = re.compile(r'^Szczegóły ')
-
-        for line in dumpfile:
-            line = whites.sub(r'\g<1>', line)
-
-            if line in ignored_lines:
-                continue
-            else:
-                # Saving whole line in case it is needed later.
-                current_entry['lines'].append(line)
-
-                if date_pattern.match(line):
-                    # First line
-                    current_entry['date'] = date_pattern.sub(r'\3-\2-\1', line)
-                elif amount_pattern.match(line):
-                    ones = amount_pattern.sub(r'\1', line)
-                    zahlen = float(whites_zahlen.sub('', ones))
-                    fraction = float(amount_pattern.sub(r'\2', line)) / 100.0
-                    if zahlen < 0:
-                        amount = zahlen - fraction
-                        current_entry['sign'] = '-'
-                    else:
-                        amount = zahlen + fraction
-                        current_entry['sign'] = '+'
-                    current_entry['amount'] = round(amount, 2)
-                elif details_line_pattern.match(line):
-                    # Nothing interesting here
-                    pass
-                elif line in known_modes:
-                    # Last line, current entry is done, moving to next one.
-                    entries.append(current_entry)
-                    current_entry = dict()
-                    current_entry['lines'] = list()
-                else:
-                    for payee_pattern in payees_dictionary:
-                        if payee_pattern:
-                            payee_regexp = re.compile('^' + payee_pattern[0] + '.*')
-                            if payee_regexp.match(line):
-                                current_entry['payee'] = payee_pattern[1]
-                                if len(payee_pattern) > 2:
-                                    current_entry['category'] = payee_pattern[2]
-                                if len(payee_pattern) > 3:
-                                    current_entry['mode'] = payee_pattern[3]
-                                if len(payee_pattern) > 4:
-                                    current_entry['comment'] = payee_pattern[4]
-
-        # Further processing
-        for i, entry in enumerate(entries):
-            if not 'payee' in entry or entry['payee'] == '':
-                entries[i]['payee'] = entry['lines'][1]
-            if not 'mode' in entry:
-                entries[i]['mode'] = ''
-            if not 'category' in entry:
-                entries[i]['category'] = ''
-            if not 'comment' in entry:
-                entries[i]['comment'] = default_comment
-
-            if atm_mode in entry['lines']:
-                entries[i]['mode'] = atm_mode
-                entries[i]['category'] = transfer_category
-                entries[i]['payee'] = default_payee
+    entries = postprocess_operations(entries)
 
     return create_csv_content(entries)
+
 
 if __name__ == '__main__':
     ARGUMENTS = parse_args()
