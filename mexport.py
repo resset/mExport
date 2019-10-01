@@ -76,6 +76,8 @@ def search_payee(string, payees):
                     mode = payee_pattern[3]
                 if len(payee_pattern) > 4:
                     comment = payee_pattern[4]
+                # Finish search after first match
+                break
     return payee, category, mode, comment
 
 
