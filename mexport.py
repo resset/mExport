@@ -54,6 +54,26 @@ def group_lines(dump_file_content):
 
     return groups
 
+def search_payee(string, payees):
+    """Searches in current operation data for known payee."""
+
+    payee = ''
+    category = ''
+    mode = ''
+    comment = ''
+    for payee_pattern in payees:
+        if payee_pattern:
+            payee_regexp = re.compile('^' + payee_pattern[0] + '.*')
+            if payee_regexp.match(string):
+                payee = payee_pattern[1]
+                if len(payee_pattern) > 2:
+                    category = payee_pattern[2]
+                if len(payee_pattern) > 3:
+                    mode = payee_pattern[3]
+                if len(payee_pattern) > 4:
+                    comment = payee_pattern[4]
+    return payee, category, mode, comment
+
 def extract_operation(group, payees):
     """Main function that creates operation record."""
 
@@ -79,6 +99,9 @@ def extract_operation(group, payees):
 
     operation['lines'] = []
 
+    operation['payee'], operation['category'], \
+    operation['mode'], operation['comment'] = search_payee(group[1], payees)
+
     for line in group:
         operation['lines'].append(line)
 
@@ -97,25 +120,14 @@ def extract_operation(group, payees):
                 operation['sign'] = '+'
             operation['amount'] = round(amount, 2)
         elif details_line_pattern.match(line):
-            # Nothing interesting here
+            # Nothing interesting here for now
             pass
         elif line in known_modes:
-            # Last line, current entry is done, moving to next one.
-            #return operation
+            # Last line
             pass
         else:
-            # FIXME: This should go into subroutine
-            for payee_pattern in payees:
-                if payee_pattern:
-                    payee_regexp = re.compile('^' + payee_pattern[0] + '.*')
-                    if payee_regexp.match(line):
-                        operation['payee'] = payee_pattern[1]
-                        if len(payee_pattern) > 2:
-                            operation['category'] = payee_pattern[2]
-                        if len(payee_pattern) > 3:
-                            operation['mode'] = payee_pattern[3]
-                        if len(payee_pattern) > 4:
-                            operation['comment'] = payee_pattern[4]
+            # Any other line
+            pass
     return operation
 
 def postprocess_operations(operations):
