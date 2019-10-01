@@ -4,6 +4,7 @@ import sys
 import re
 import csv
 
+
 def parse_args():
     """Handle command-line arguments."""
 
@@ -16,6 +17,7 @@ def parse_args():
         'PAYEES_FILE': sys.argv[1],
         'BANK_DUMP_FILE': sys.argv[2]
     }
+
 
 def get_payees(filename):
     """Create payees dictionary out of simple CSV file."""
@@ -31,6 +33,7 @@ def get_payees(filename):
             payees.append(row)
 
     return payees
+
 
 def group_lines(dump_file_content):
     """Arrange input dump file lines into groups of separate operation lines."""
@@ -54,6 +57,7 @@ def group_lines(dump_file_content):
 
     return groups
 
+
 def search_payee(string, payees):
     """Searches in current operation data for known payee."""
 
@@ -74,6 +78,7 @@ def search_payee(string, payees):
                     comment = payee_pattern[4]
     return payee, category, mode, comment
 
+
 def extract_operation(group, payees):
     """Main function that creates operation record."""
 
@@ -90,7 +95,7 @@ def extract_operation(group, payees):
         'Operacja gotówkowa',
         'Przelew',
         'Płatność kartą'
-        ]
+    ]
 
     date_pattern = re.compile(r'^([0-9]{2})\.([0-9]{2})\.([0-9]{4})$')
     amount_pattern = re.compile(r'^([\-]?[ 0-9]+),([0-9]{2}) PLN$')
@@ -100,7 +105,8 @@ def extract_operation(group, payees):
     operation['lines'] = []
 
     operation['payee'], operation['category'], \
-    operation['mode'], operation['comment'] = search_payee(group[1], payees)
+        operation['mode'], operation['comment'] = search_payee(
+            group[1], payees)
 
     for line in group:
         operation['lines'].append(line)
@@ -130,6 +136,7 @@ def extract_operation(group, payees):
             pass
     return operation
 
+
 def postprocess_operations(operations):
     """Perform additional operations that will make output complete."""
 
@@ -155,6 +162,7 @@ def postprocess_operations(operations):
 
     return operations
 
+
 def create_csv_content(entries):
     """Prepare CSV-formatted string with list of entries."""
 
@@ -178,6 +186,7 @@ def create_csv_content(entries):
                        + '"' + str(entry['category']) + '";\n')
 
     return operations
+
 
 def export_operations(files):
     """Disassemble input, create and return CSV content.
@@ -205,6 +214,7 @@ def export_operations(files):
     entries = postprocess_operations(entries)
 
     return create_csv_content(entries)
+
 
 if __name__ == '__main__':
     ARGUMENTS = parse_args()
