@@ -146,6 +146,13 @@ def postprocess_operations(operations):
     atm_mode = 'bankomat'
     transfer_category = 'transfer'
     default_payee = ''
+    default_bank = "mBank"
+    default_account = 'eKONTO'
+    default_number = ''
+    default_unit = 'zł'
+    default_status = 'N'
+    default_tracker = ''
+    default_bookmarked = 'N'
 
     for i, operation in enumerate(operations):
         if not 'payee' in operation or operation['payee'] == '':
@@ -162,30 +169,40 @@ def postprocess_operations(operations):
             operations[i]['category'] = transfer_category
             operations[i]['payee'] = default_payee
 
+        operations[i]['bank'] = default_bank
+        operations[i]['account'] = default_account
+        operations[i]['number'] = default_number
+        operations[i]['unit'] = default_unit
+        operations[i]['status'] = default_status
+        operations[i]['tracker'] = default_tracker
+        operations[i]['bookmarked'] = default_bookmarked
+
     return operations
 
 
 def create_csv_content(entries):
     """Prepare CSV-formatted string with list of entries."""
 
-    default_account = 'eKONTO'
-    default_number = '0'
-    default_unit = 'zł'
+    operations = ('"date";"bank";"account";"number";"mode";"payee";"comment";'
+                  + '"quantity";"unit";"amount";"sign";"category";"status";'
+                  + '"tracker";"bookmarked"\n')
 
-    operations = ('"date";"account";"number";"mode";"payee";"comment";'
-                  + '"quantity";"unit";"amount";"sign";"category"\n')
     for entry in entries[::-1]:
         operations += ('"' + str(entry['date']) + '";'
-                       + '"' + default_account + '";'
-                       + '"' + default_number + '";'
+                       + '"' + str(entry['bank']) + '";'
+                       + '"' + str(entry['account']) + '";'
+                       + '"' + str(entry['number']) + '";'
                        + '"' + str(entry['mode']) + '";'
                        + '"' + str(entry['payee']) + '";'
                        + '"' + str(entry['comment']) + '";'
                        + '"' + str(entry['amount']) + '";'
-                       + '"' + default_unit + '";'
+                       + '"' + str(entry['unit']) + '";'
                        + '"' + str(entry['amount']) + '";'
                        + '"' + str(entry['sign']) + '";'
-                       + '"' + str(entry['category']) + '";\n')
+                       + '"' + str(entry['category']) + '";'
+                       + '"' + str(entry['status']) + '";'
+                       + '"' + str(entry['tracker']) + '";'
+                       + '"' + str(entry['bookmarked']) + '";\n')
 
     return operations
 
