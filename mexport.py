@@ -168,14 +168,20 @@ def postprocess_operations(operations):
 def create_csv_content(entries):
     """Prepare CSV-formatted string with list of entries."""
 
+    default_bank = "mBank"
     default_account = 'eKONTO'
     default_number = '0'
     default_unit = 'zł'
+    default_status = 'N'
+    default_tracker = ''
+    default_bookmarked = 'N'
 
-    operations = ('"date";"account";"number";"mode";"payee";"comment";'
-                  + '"quantity";"unit";"amount";"sign";"category"\n')
+    operations = ('"date";"bank";"account";"number";"mode";"payee";"comment";'
+                  + '"quantity";"unit";"amount";"sign";"category";"status";'
+                  + '"tracker";"bookmarked"\n')
     for entry in entries[::-1]:
         operations += ('"' + str(entry['date']) + '";'
+                       + '"' + default_bank + '";'
                        + '"' + default_account + '";'
                        + '"' + default_number + '";'
                        + '"' + str(entry['mode']) + '";'
@@ -185,7 +191,10 @@ def create_csv_content(entries):
                        + '"' + default_unit + '";'
                        + '"' + str(entry['amount']) + '";'
                        + '"' + str(entry['sign']) + '";'
-                       + '"' + str(entry['category']) + '";\n')
+                       + '"' + str(entry['category']) + '";'
+                       + '"' + default_status + '";'
+                       + '"' + default_tracker + '";'
+                       + '"' + default_bookmarked + '";\n')
 
     return operations
 
