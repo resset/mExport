@@ -170,7 +170,7 @@ def create_csv_content(entries):
 
     default_bank = "mBank"
     default_account = 'eKONTO'
-    default_number = '0'
+    default_number = ''
     default_unit = 'zł'
     default_status = 'N'
     default_tracker = ''
@@ -179,6 +179,7 @@ def create_csv_content(entries):
     operations = ('"date";"bank";"account";"number";"mode";"payee";"comment";'
                   + '"quantity";"unit";"amount";"sign";"category";"status";'
                   + '"tracker";"bookmarked"\n')
+
     for entry in entries[::-1]:
         operations += ('"' + str(entry['date']) + '";'
                        + '"' + default_bank + '";'
