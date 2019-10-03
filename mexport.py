@@ -144,6 +144,31 @@ def extract_csv_operation(csv_record, payees):
 
     operation = {}
 
+    amount_pattern = re.compile(r'^([\-]?[ 0-9]+),([0-9]{2})$')
+    whites_zahlen = re.compile(r'[\s]+')
+
+    operation['lines'] = []
+
+    operation['payee'], operation['category'], \
+        operation['mode'], operation['comment'] = search_payee(
+            csv_record[3], payees)
+
+    operation['date'] = csv_record[0]
+
+    ones = amount_pattern.sub(r'\1', csv_record[6])
+    zahlen = float(whites_zahlen.sub('', ones))
+    fraction = float(amount_pattern.sub(r'\2', csv_record[6])) / 100.0
+    if zahlen < 0:
+        amount = zahlen - fraction
+        operation['sign'] = '-'
+    else:
+        amount = zahlen + fraction
+        operation['sign'] = '+'
+    operation['amount'] = round(amount, 2)
+
+    # if row[2] == 'ZAKUP PRZY UŻYCIU KARTY':
+    #     operations[i]['mode'] = ''
+
     return operation
 
 
@@ -154,7 +179,7 @@ def postprocess_operations(operations):
     atm_mode = 'bankomat'
     transfer_category = 'transfer'
     default_payee = ''
-    default_bank = "mBank"
+    default_bank = 'mBank'
     default_account = 'eKONTO'
     default_number = ''
     default_unit = 'zł'
@@ -163,7 +188,7 @@ def postprocess_operations(operations):
     default_bookmarked = 'N'
 
     for i, operation in enumerate(operations):
-        if not 'payee' in operation or operation['payee'] == '':
+        if (not 'payee' in operation or operation['payee'] == '') and len(operation['lines']) > 1:
             operations[i]['payee'] = operation['lines'][1]
         if not 'mode' in operation:
             operations[i]['mode'] = ''
@@ -241,7 +266,7 @@ def export_operations(files):
 
             if process_start:
                 entry = extract_csv_operation(row, payees_dictionary)
-                #entries.append(entry)
+                entries.append(entry)
 
             if row and row[0] == '#Data operacji':
                 process_start = True
