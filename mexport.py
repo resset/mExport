@@ -15,7 +15,7 @@ def parse_args():
 
     return {
         'PAYEES_FILE': sys.argv[1],
-        'BANK_DUMP_FILE': sys.argv[2]
+        'BANK_CSV_FILE': sys.argv[2]
     }
 
 
@@ -139,6 +139,14 @@ def extract_operation(group, payees):
     return operation
 
 
+def extract_csv_operation(csv_record, payees):
+    """Main function that creates operation record from CSV data line."""
+
+    operation = {}
+
+    return operation
+
+
 def postprocess_operations(operations):
     """Perform additional operations that will make output complete."""
 
@@ -224,11 +232,19 @@ def export_operations(files):
 
     entries = []
 
-    with open(files['BANK_DUMP_FILE']) as bank_dump:
-        lines_groups = group_lines(bank_dump)
-        for group in lines_groups:
-            entry = extract_operation(group, payees_dictionary)
-            entries.append(entry)
+    with open(files['BANK_CSV_FILE'], encoding='cp1250') as bank_csv:
+        csv_reader = csv.reader(bank_csv, delimiter=';')
+        process_start = False
+        for row in csv_reader:
+            if not row:
+                process_start = False
+
+            if process_start:
+                entry = extract_csv_operation(row, payees_dictionary)
+                #entries.append(entry)
+
+            if row and row[0] == '#Data operacji':
+                process_start = True
 
     entries = postprocess_operations(entries)
 
