@@ -15,7 +15,7 @@ def parse_args():
 
     return {
         'PAYEES_FILE': sys.argv[1],
-        'BANK_DUMP_FILE': sys.argv[2]
+        'BANK_CSV_FILE': sys.argv[2]
     }
 
 
@@ -139,6 +139,55 @@ def extract_operation(group, payees):
     return operation
 
 
+def extract_csv_operation(csv_record, payees):
+    """Main function that creates operation record from CSV data line."""
+
+    operation = {}
+
+    amount_pattern = re.compile(r'^([\-]?[ 0-9]+),([0-9]{2})$')
+    whites_zahlen = re.compile(r'[\s]+')
+
+    operation['lines'] = []
+
+    if csv_record[2] == 'PRZELEW ZEWNĘTRZNY PRZYCHODZĄCY' \
+        or csv_record[2] == 'PRZELEW ZEWNĘTRZNY WYCHODZĄCY':
+        payee = csv_record[4]
+    else:
+        payee = csv_record[3]
+
+    operation['payee'], operation['category'], \
+        operation['mode'], operation['comment'] = search_payee(
+            payee, payees)
+
+    operation['date'] = csv_record[0]
+
+    ones = amount_pattern.sub(r'\1', csv_record[6])
+    zahlen = float(whites_zahlen.sub('', ones))
+    fraction = float(amount_pattern.sub(r'\2', csv_record[6])) / 100.0
+    if zahlen < 0:
+        amount = zahlen - fraction
+        operation['sign'] = '-'
+    else:
+        amount = zahlen + fraction
+        operation['sign'] = '+'
+    operation['amount'] = round(amount, 2)
+
+    if csv_record[2] == 'WYPŁATA W BANKOMACIE':
+        operation['mode'] = 'bankomat'
+
+    if csv_record[2] == 'RĘCZNA SPŁATA KARTY KREDYT.':
+        operation['payee'] = 'Mateusz'
+        operation['category'] = 'transfer'
+        operation['mode'] = 'przelew'
+
+    if csv_record[2] == 'PRZELEW NA TWOJE CELE':
+        operation['payee'] = 'Mateusz'
+        operation['category'] = 'transfer'
+        operation['mode'] = 'przelew'
+
+    return operation
+
+
 def postprocess_operations(operations):
     """Perform additional operations that will make output complete."""
 
@@ -146,7 +195,7 @@ def postprocess_operations(operations):
     atm_mode = 'bankomat'
     transfer_category = 'transfer'
     default_payee = ''
-    default_bank = "mBank"
+    default_bank = 'mBank'
     default_account = 'eKONTO'
     default_number = ''
     default_unit = 'zł'
@@ -155,7 +204,7 @@ def postprocess_operations(operations):
     default_bookmarked = 'N'
 
     for i, operation in enumerate(operations):
-        if not 'payee' in operation or operation['payee'] == '':
+        if (not 'payee' in operation or operation['payee'] == '') and len(operation['lines']) > 1:
             operations[i]['payee'] = operation['lines'][1]
         if not 'mode' in operation:
             operations[i]['mode'] = ''
@@ -187,7 +236,7 @@ def create_csv_content(entries):
                   + '"quantity";"unit";"amount";"sign";"category";"status";'
                   + '"tracker";"bookmarked"\n')
 
-    for entry in entries[::-1]:
+    for entry in entries:
         operations += ('"' + str(entry['date']) + '";'
                        + '"' + str(entry['bank']) + '";'
                        + '"' + str(entry['account']) + '";'
@@ -224,11 +273,19 @@ def export_operations(files):
 
     entries = []
 
-    with open(files['BANK_DUMP_FILE']) as bank_dump:
-        lines_groups = group_lines(bank_dump)
-        for group in lines_groups:
-            entry = extract_operation(group, payees_dictionary)
-            entries.append(entry)
+    with open(files['BANK_CSV_FILE'], encoding='cp1250') as bank_csv:
+        csv_reader = csv.reader(bank_csv, delimiter=';')
+        process_start = False
+        for row in csv_reader:
+            if not row:
+                process_start = False
+
+            if process_start:
+                entry = extract_csv_operation(row, payees_dictionary)
+                entries.append(entry)
+
+            if row and row[0] == '#Data operacji':
+                process_start = True
 
     entries = postprocess_operations(entries)
 
