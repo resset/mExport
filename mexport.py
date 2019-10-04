@@ -149,9 +149,14 @@ def extract_csv_operation(csv_record, payees):
 
     operation['lines'] = []
 
+    if csv_record[2] == 'PRZELEW ZEWNĘTRZNY PRZYCHODZĄCY' or csv_record[2] == 'PRZELEW ZEWNĘTRZNY WYCHODZĄCY':
+        payee = csv_record[4]
+    else:
+        payee = csv_record[3]
+
     operation['payee'], operation['category'], \
         operation['mode'], operation['comment'] = search_payee(
-            csv_record[3], payees)
+            payee, payees)
 
     operation['date'] = csv_record[0]
 
@@ -166,8 +171,18 @@ def extract_csv_operation(csv_record, payees):
         operation['sign'] = '+'
     operation['amount'] = round(amount, 2)
 
-    # if row[2] == 'ZAKUP PRZY UŻYCIU KARTY':
-    #     operations[i]['mode'] = ''
+    if csv_record[2] == 'WYPŁATA W BANKOMACIE':
+        operation['mode'] = 'bankomat'
+
+    if csv_record[2] == 'RĘCZNA SPŁATA KARTY KREDYT.':
+        operation['payee'] = 'Mateusz'
+        operation['category'] = 'transfer'
+        operation['mode'] = 'przelew'
+
+    if csv_record[2] == 'PRZELEW NA TWOJE CELE':
+        operation['payee'] = 'Mateusz'
+        operation['category'] = 'transfer'
+        operation['mode'] = 'przelew'
 
     return operation
 
@@ -220,7 +235,7 @@ def create_csv_content(entries):
                   + '"quantity";"unit";"amount";"sign";"category";"status";'
                   + '"tracker";"bookmarked"\n')
 
-    for entry in entries[::-1]:
+    for entry in entries:
         operations += ('"' + str(entry['date']) + '";'
                        + '"' + str(entry['bank']) + '";'
                        + '"' + str(entry['account']) + '";'
