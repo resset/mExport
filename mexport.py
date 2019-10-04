@@ -149,7 +149,8 @@ def extract_csv_operation(csv_record, payees):
 
     operation['lines'] = []
 
-    if csv_record[2] == 'PRZELEW ZEWNĘTRZNY PRZYCHODZĄCY' or csv_record[2] == 'PRZELEW ZEWNĘTRZNY WYCHODZĄCY':
+    if csv_record[2] == 'PRZELEW ZEWNĘTRZNY PRZYCHODZĄCY' \
+        or csv_record[2] == 'PRZELEW ZEWNĘTRZNY WYCHODZĄCY':
         payee = csv_record[4]
     else:
         payee = csv_record[3]
