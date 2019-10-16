@@ -160,6 +160,7 @@ def extract_csv_operation(csv_record, payees):
             payee, payees)
 
     operation['date'] = csv_record[0]
+    operation['accounting_date'] = csv_record[1]
 
     ones = amount_pattern.sub(r'\1', csv_record[6])
     zahlen = float(whites_zahlen.sub('', ones))
@@ -202,6 +203,17 @@ def postprocess_operations(operations):
     default_status = 'N'
     default_tracker = ''
     default_bookmarked = 'N'
+
+    # Here we reject operations that are on the beginning of the list
+    # but have accounting date different than transaction date.
+    # This in an experimental step and may be removed in the future.
+    filtered = False
+    for i, operation in enumerate(operations):
+        if not filtered:
+            if operation['date'] != operation['accounting_date']:
+                del operations[i]
+            else:
+                filtered = True
 
     for i, operation in enumerate(operations):
         if (not 'payee' in operation or operation['payee'] == '') and len(operation['lines']) > 1:
