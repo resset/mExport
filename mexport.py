@@ -144,27 +144,20 @@ def extract_csv_operation(csv_record, payees):
 
     operation = {}
 
-    amount_pattern = re.compile(r'^([\-]?[ 0-9]+),([0-9]{2})$')
+    amount_pattern = re.compile(r'^([\-]?[ 0-9]+),([0-9]{2}) PLN$')
     whites_zahlen = re.compile(r'[\s]+')
 
     operation['lines'] = []
 
-    if csv_record[2] == 'PRZELEW ZEWNĘTRZNY PRZYCHODZĄCY' \
-        or csv_record[2] == 'PRZELEW ZEWNĘTRZNY WYCHODZĄCY':
-        payee = csv_record[4]
-    else:
-        payee = csv_record[3]
-
     operation['payee'], operation['category'], \
         operation['mode'], operation['comment'] = search_payee(
-            payee, payees)
+            csv_record[1], payees)
 
     operation['date'] = csv_record[0]
-    operation['accounting_date'] = csv_record[1]
 
-    ones = amount_pattern.sub(r'\1', csv_record[6])
+    ones = amount_pattern.sub(r'\1', csv_record[4])
     zahlen = float(whites_zahlen.sub('', ones))
-    fraction = float(amount_pattern.sub(r'\2', csv_record[6])) / 100.0
+    fraction = float(amount_pattern.sub(r'\2', csv_record[4])) / 100.0
     if zahlen < 0:
         amount = zahlen - fraction
         operation['sign'] = '-'
@@ -173,18 +166,18 @@ def extract_csv_operation(csv_record, payees):
         operation['sign'] = '+'
     operation['amount'] = round(amount, 2)
 
-    if csv_record[2] == 'WYPŁATA W BANKOMACIE':
-        operation['mode'] = 'bankomat'
+    # if csv_record[2] == 'WYPŁATA W BANKOMACIE':
+    #     operation['mode'] = 'bankomat'
 
-    if csv_record[2] == 'RĘCZNA SPŁATA KARTY KREDYT.':
-        operation['payee'] = 'Mateusz'
-        operation['category'] = 'transfer'
-        operation['mode'] = 'przelew'
+    # if csv_record[2] == 'RĘCZNA SPŁATA KARTY KREDYT.':
+    #     operation['payee'] = 'Mateusz'
+    #     operation['category'] = 'transfer'
+    #     operation['mode'] = 'przelew'
 
-    if csv_record[2] == 'PRZELEW NA TWOJE CELE':
-        operation['payee'] = 'Mateusz'
-        operation['category'] = 'transfer'
-        operation['mode'] = 'przelew'
+    # if csv_record[2] == 'PRZELEW NA TWOJE CELE':
+    #     operation['payee'] = 'Mateusz'
+    #     operation['category'] = 'transfer'
+    #     operation['mode'] = 'przelew'
 
     return operation
 
@@ -203,17 +196,6 @@ def postprocess_operations(operations):
     default_status = 'N'
     default_tracker = ''
     default_bookmarked = 'N'
-
-    # Here we reject operations that are on the beginning of the list
-    # but have accounting date different than transaction date.
-    # This in an experimental step and may be removed in the future.
-    filtered = False
-    for i, operation in enumerate(operations):
-        if not filtered:
-            if operation['date'] != operation['accounting_date']:
-                del operations[i]
-            else:
-                filtered = True
 
     for i, operation in enumerate(operations):
         if (not 'payee' in operation or operation['payee'] == '') and len(operation['lines']) > 1:
@@ -248,7 +230,7 @@ def create_csv_content(entries):
                   + '"quantity";"unit";"amount";"sign";"category";"status";'
                   + '"tracker";"bookmarked"\n')
 
-    for entry in entries:
+    for entry in entries[::-1]:
         operations += ('"' + str(entry['date']) + '";'
                        + '"' + str(entry['bank']) + '";'
                        + '"' + str(entry['account']) + '";'
