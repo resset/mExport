@@ -35,29 +35,6 @@ def get_payees(filename):
     return payees
 
 
-def group_lines(dump_file_content):
-    """Arrange input dump file lines into groups of separate operation lines."""
-
-    groups = []
-
-    whites = re.compile(r'[\s]*(.*?)[\s]*\n')
-    ignored_lines = ['', 'Ok?']
-    date_pattern = re.compile(r'^([0-9]{2})\.([0-9]{2})\.([0-9]{4})$')
-
-    for line in dump_file_content:
-        line = whites.sub(r'\g<1>', line)
-
-        if line in ignored_lines:
-            continue
-        else:
-            if date_pattern.match(line):
-                groups.append([])
-
-        groups[len(groups) - 1].append(line)
-
-    return groups
-
-
 def search_payee(string, payees):
     """Searches in current operation data for known payee."""
 
@@ -79,64 +56,6 @@ def search_payee(string, payees):
                 # Finish search after first match
                 break
     return payee, category, mode, comment
-
-
-def extract_operation(group, payees):
-    """Main function that creates operation record."""
-
-    operation = {}
-
-    # This lines ends each set of data. The list seems to be complete at least
-    # in my case. It won't hurt to check its completeness from time to time.
-    # Here is how we get it:
-    # grep -P "^[0-9]+\.[0-9]+\.[0-9]+" -B1 --color=never dump.txt \
-    # | grep -P "^[^0-9\-]" | sort | uniq
-    known_modes = [
-        'Inna operacja',
-        'Nierozliczone',
-        'Operacja gotówkowa',
-        'Przelew',
-        'Płatność kartą'
-    ]
-
-    date_pattern = re.compile(r'^([0-9]{2})\.([0-9]{2})\.([0-9]{4})$')
-    amount_pattern = re.compile(r'^([\-]?[ 0-9]+),([0-9]{2}) PLN$')
-    whites_zahlen = re.compile(r'[\s]+')
-    details_line_pattern = re.compile(r'^Szczegóły ')
-
-    operation['lines'] = []
-
-    operation['payee'], operation['category'], \
-        operation['mode'], operation['comment'] = search_payee(
-            group[1], payees)
-
-    for line in group:
-        operation['lines'].append(line)
-
-        if date_pattern.match(line):
-            # First line
-            operation['date'] = date_pattern.sub(r'\3-\2-\1', line)
-        elif amount_pattern.match(line):
-            ones = amount_pattern.sub(r'\1', line)
-            zahlen = float(whites_zahlen.sub('', ones))
-            fraction = float(amount_pattern.sub(r'\2', line)) / 100.0
-            if zahlen < 0:
-                amount = zahlen - fraction
-                operation['sign'] = '-'
-            else:
-                amount = zahlen + fraction
-                operation['sign'] = '+'
-            operation['amount'] = round(amount, 2)
-        elif details_line_pattern.match(line):
-            # Nothing interesting here for now
-            pass
-        elif line in known_modes:
-            # Last line
-            pass
-        else:
-            # Any other line
-            pass
-    return operation
 
 
 def extract_csv_operation(csv_record, payees):
