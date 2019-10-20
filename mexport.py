@@ -149,10 +149,6 @@ def extract_csv_operation(csv_record, payees):
 
     operation['lines'] = []
 
-    operation['payee'], operation['category'], \
-        operation['mode'], operation['comment'] = search_payee(
-            csv_record[1], payees)
-
     operation['date'] = csv_record[0]
 
     ones = amount_pattern.sub(r'\1', csv_record[4])
@@ -166,61 +162,42 @@ def extract_csv_operation(csv_record, payees):
         operation['sign'] = '+'
     operation['amount'] = round(amount, 2)
 
-    # if csv_record[2] == 'WYPŁATA W BANKOMACIE':
-    #     operation['mode'] = 'bankomat'
+    operation['payee'], operation['category'], \
+        operation['mode'], operation['comment'] = search_payee(
+            csv_record[1], payees)
 
-    # if csv_record[2] == 'RĘCZNA SPŁATA KARTY KREDYT.':
-    #     operation['payee'] = 'Mateusz'
-    #     operation['category'] = 'transfer'
-    #     operation['mode'] = 'przelew'
+    DEFAULT_PAYEE = ''
 
-    # if csv_record[2] == 'PRZELEW NA TWOJE CELE':
-    #     operation['payee'] = 'Mateusz'
-    #     operation['category'] = 'transfer'
-    #     operation['mode'] = 'przelew'
+    if 'PRZELEW ZEWNĘTRZNY' in csv_record[1]:
+        operation['mode'] = 'przelew'
+    elif 'PRZELEW WEWNĘTRZNY' in csv_record[1]:
+        operation['payee'] = DEFAULT_PAYEE
+        operation['category'] = 'transfer'
+        operation['mode'] = 'przelew'
+    elif 'ZAKUP PRZY UŻYCIU KARTY W KRAJU' in csv_record[1]:
+        operation['mode'] = 'terminal'
+    elif 'WYPŁATA GOTÓWKI W BANKOMACIE' in csv_record[1]:
+        operation['payee'] = DEFAULT_PAYEE
+        operation['category'] = 'transfer'
+        operation['mode'] = 'bankomat'
+    elif 'RĘCZNA SPŁATA KARTY KREDYT.' in csv_record[1]:
+        operation['payee'] = DEFAULT_PAYEE
+        operation['category'] = 'transfer'
+        operation['mode'] = 'przelew'
+    elif 'PRZELEW NA TWOJE CELE' in csv_record[1]:
+        operation['payee'] = DEFAULT_PAYEE
+        operation['category'] = 'transfer'
+        operation['mode'] = 'przelew'
+
+    operation['bank'] = 'mBank'
+    operation['account'] = 'eKONTO'
+    operation['number'] = ''
+    operation['unit'] = 'zł'
+    operation['status'] = 'N'
+    operation['tracker'] = ''
+    operation['bookmarked'] = 'N'
 
     return operation
-
-
-def postprocess_operations(operations):
-    """Perform additional operations that will make output complete."""
-
-    default_comment = ''
-    atm_mode = 'bankomat'
-    transfer_category = 'transfer'
-    default_payee = ''
-    default_bank = 'mBank'
-    default_account = 'eKONTO'
-    default_number = ''
-    default_unit = 'zł'
-    default_status = 'N'
-    default_tracker = ''
-    default_bookmarked = 'N'
-
-    for i, operation in enumerate(operations):
-        if (not 'payee' in operation or operation['payee'] == '') and len(operation['lines']) > 1:
-            operations[i]['payee'] = operation['lines'][1]
-        if not 'mode' in operation:
-            operations[i]['mode'] = ''
-        if not 'category' in operation:
-            operations[i]['category'] = ''
-        if not 'comment' in operation:
-            operations[i]['comment'] = default_comment
-
-        if atm_mode in operation['lines']:
-            operations[i]['mode'] = atm_mode
-            operations[i]['category'] = transfer_category
-            operations[i]['payee'] = default_payee
-
-        operations[i]['bank'] = default_bank
-        operations[i]['account'] = default_account
-        operations[i]['number'] = default_number
-        operations[i]['unit'] = default_unit
-        operations[i]['status'] = default_status
-        operations[i]['tracker'] = default_tracker
-        operations[i]['bookmarked'] = default_bookmarked
-
-    return operations
 
 
 def create_csv_content(entries):
@@ -280,8 +257,6 @@ def export_operations(files):
 
             if row and row[0] == '#Data operacji':
                 process_start = True
-
-    entries = postprocess_operations(entries)
 
     return create_csv_content(entries)
 
