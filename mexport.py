@@ -68,7 +68,7 @@ def extract_csv_operation(csv_record, payees):
 
     operation['lines'] = []
 
-    operation['date'] = csv_record[0]
+    operation['date'] = csv_record[0].replace('-', '')
 
     ones = amount_pattern.sub(r'\1', csv_record[4])
     zahlen = float(whites_zahlen.sub('', ones))
