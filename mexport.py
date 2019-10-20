@@ -85,26 +85,26 @@ def extract_csv_operation(csv_record, payees):
         operation['mode'], operation['comment'] = search_payee(
             csv_record[1], payees)
 
-    DEFAULT_PAYEE = ''
+    default_payee = ''
 
     if 'PRZELEW ZEWNĘTRZNY' in csv_record[1]:
         operation['mode'] = 'przelew'
     elif 'PRZELEW WEWNĘTRZNY' in csv_record[1]:
-        operation['payee'] = DEFAULT_PAYEE
+        operation['payee'] = default_payee
         operation['category'] = 'transfer'
         operation['mode'] = 'przelew'
     elif 'ZAKUP PRZY UŻYCIU KARTY W KRAJU' in csv_record[1]:
         operation['mode'] = 'terminal'
     elif 'WYPŁATA GOTÓWKI W BANKOMACIE' in csv_record[1]:
-        operation['payee'] = DEFAULT_PAYEE
+        operation['payee'] = default_payee
         operation['category'] = 'transfer'
         operation['mode'] = 'bankomat'
     elif 'RĘCZNA SPŁATA KARTY KREDYT.' in csv_record[1]:
-        operation['payee'] = DEFAULT_PAYEE
+        operation['payee'] = default_payee
         operation['category'] = 'transfer'
         operation['mode'] = 'przelew'
     elif 'PRZELEW NA TWOJE CELE' in csv_record[1]:
-        operation['payee'] = DEFAULT_PAYEE
+        operation['payee'] = default_payee
         operation['category'] = 'transfer'
         operation['mode'] = 'przelew'
 
