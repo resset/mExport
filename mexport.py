@@ -108,8 +108,12 @@ def extract_csv_operation(csv_record, payees):
         operation['category'] = 'transfer'
         operation['mode'] = 'przelew'
 
+    if 'VISA CLASSIC CREDIT' in csv_record[2]:
+        operation['account'] = 'mKarta kredytowa'
+    else:
+        operation['account'] = 'eKONTO'
+
     operation['bank'] = 'mBank'
-    operation['account'] = 'eKONTO'
     operation['number'] = ''
     operation['unit'] = 'zł'
     operation['status'] = 'N'
