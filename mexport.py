@@ -66,8 +66,6 @@ def extract_csv_operation(csv_record, payees):
     amount_pattern = re.compile(r'^([\-]?[ 0-9]+),([0-9]{2}) PLN$')
     whites_zahlen = re.compile(r'[\s]+')
 
-    operation['lines'] = []
-
     operation['date'] = csv_record[0].replace('-', '')
 
     ones = amount_pattern.sub(r'\1', csv_record[4])
