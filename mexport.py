@@ -9,13 +9,13 @@ def parse_args():
     """Handle command-line arguments."""
 
     if len(sys.argv) < 3:
-        print('Usage:\n\t' + sys.argv[0] + ' payees.csv bank_dump.txt')
+        print('Usage:\n\t' + sys.argv[0] + ' payees.csv bank_dump_file')
         exit(1)
         return None
 
     return {
         'PAYEES_FILE': sys.argv[1],
-        'BANK_CSV_FILE': sys.argv[2]
+        'BANK_DUMP_FILE': sys.argv[2]
     }
 
 
@@ -167,7 +167,7 @@ def export_operations(files):
 
     entries = []
 
-    with open(files['BANK_CSV_FILE'], encoding='cp1250') as bank_csv:
+    with open(files['BANK_DUMP_FILE'], encoding='cp1250') as bank_csv:
         csv_reader = csv.reader(bank_csv, delimiter=';')
         process_start = False
         for row in csv_reader:
