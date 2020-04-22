@@ -1,2 +1,7 @@
+.~lock*
+.vscode/
+__pycache__/
 config.json
+dump.csv
+import.csv
 payees.csv
