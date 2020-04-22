@@ -5,7 +5,7 @@ import pandas
 import mexport
 
 
-def export_operations(files):
+def export_operations(payees_file, bank_dump_file):
     """Disassemble input, create and return CSV content.
 
     Arguments:
@@ -18,11 +18,11 @@ def export_operations(files):
     # amount is a value expressed in basic currency, so it is quantity multiplied
     # by exchange rate.
 
-    payees_dictionary = mexport.get_payees(files['PAYEES_FILE'])
+    payees_dictionary = mexport.get_payees(payees_file)
 
     entries = []
 
-    excel_file = pandas.read_excel(files['BANK_DUMP_FILE'])
+    excel_file = pandas.read_excel(bank_dump_file)
 
     for record in excel_file.values:
         entry = {}
@@ -72,5 +72,6 @@ def export_operations(files):
 
 if __name__ == '__main__':
     ARGUMENTS = mexport.parse_args()
-    OPERATIONS_CSV = export_operations(ARGUMENTS)
+    OPERATIONS_CSV = export_operations(
+        ARGUMENTS['PAYEES_FILE'], ARGUMENTS['BANK_DUMP_FILE'])
     print(OPERATIONS_CSV, end='')

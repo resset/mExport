@@ -184,7 +184,7 @@ def create_debug_content(entries):
     return operations
 
 
-def export_operations(files):
+def export_operations(payees_file, bank_dump_file, mode):
     """Disassemble input, create and return CSV content.
 
     Arguments:
@@ -197,11 +197,11 @@ def export_operations(files):
     # amount is a value expressed in basic currency, so it is quantity multiplied
     # by exchange rate.
 
-    payees_dictionary = get_payees(files['PAYEES_FILE'])
+    payees_dictionary = get_payees(payees_file)
 
     entries = []
 
-    with open(files['BANK_DUMP_FILE'], encoding='cp1250') as bank_csv:
+    with open(bank_dump_file, encoding='cp1250') as bank_csv:
         csv_reader = csv.reader(bank_csv, delimiter=';')
         process_start = False
         for row in csv_reader:
@@ -215,7 +215,7 @@ def export_operations(files):
             if row and row[0] == '#Data operacji':
                 process_start = True
 
-    if files['MODE'] == 'debug':
+    if mode == 'debug':
         return create_debug_content(entries)
 
     return create_csv_content(entries)
@@ -223,5 +223,6 @@ def export_operations(files):
 
 if __name__ == '__main__':
     ARGUMENTS = parse_args()
-    OPERATIONS_CSV = export_operations(ARGUMENTS)
+    OPERATIONS_CSV = export_operations(
+        ARGUMENTS['PAYEES_FILE'], ARGUMENTS['BANK_DUMP_FILE'], ARGUMENTS['MODE'])
     print(OPERATIONS_CSV, end='')
