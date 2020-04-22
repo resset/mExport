@@ -3,5 +3,6 @@
 __pycache__/
 config.json
 dump.csv
+dump.xlsx
 import.csv
 payees.csv
