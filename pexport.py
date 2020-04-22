@@ -5,7 +5,7 @@ import pandas
 import mexport
 
 
-def export_operations(payees_file, bank_dump_file):
+def export_operations(payees_file, bank_dump_file, mode):
     """Disassemble input, create and return CSV content.
 
     Arguments:
@@ -39,10 +39,12 @@ def export_operations(payees_file, bank_dump_file):
         else:
             entry['sign'] = '+'
 
+        unwanted_prefix = ''
+
         #print(str(record[5]) + ' ' + str(record[2]))
         entry['payee'], entry['category'], \
             entry['mode'], entry['comment'] = mexport.search_payee(
-                str(record[5]), payees_dictionary)
+                str(record[5].replace(unwanted_prefix, '')), payees_dictionary)
 
         default_payee = ''
 
@@ -67,11 +69,14 @@ def export_operations(payees_file, bank_dump_file):
 
         entries.append(entry)
 
+    if mode == 'debug':
+        return mexport.create_debug_content(entries)
+
     return mexport.create_csv_content(entries)
 
 
 if __name__ == '__main__':
     ARGUMENTS = mexport.parse_args()
     OPERATIONS_CSV = export_operations(
-        ARGUMENTS['PAYEES_FILE'], ARGUMENTS['BANK_DUMP_FILE'])
+        ARGUMENTS['PAYEES_FILE'], ARGUMENTS['BANK_DUMP_FILE'], ARGUMENTS['MODE'])
     print(OPERATIONS_CSV, end='')
