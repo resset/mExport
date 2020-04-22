@@ -1,6 +1,7 @@
 """mBank operations importer. Creates files eaten by Skrooge."""
 
 import sys
+import json
 import re
 import csv
 
@@ -25,6 +26,10 @@ def parse_args():
         'PAYEES_FILE': sys.argv[1],
         'BANK_DUMP_FILE': sys.argv[2]
     }
+
+
+def load_config(config_file):
+    return json.load(open(config_file))
 
 
 def get_payees(filename):
@@ -66,7 +71,7 @@ def search_payee(string, payees):
     return payee, category, mode, comment
 
 
-def extract_csv_operation(csv_record, payees):
+def extract_csv_operation(csv_record, payees, default_payee):
     """Main function that creates operation record from CSV data line."""
 
     operation = {}
@@ -90,8 +95,6 @@ def extract_csv_operation(csv_record, payees):
     operation['payee'], operation['category'], \
         operation['mode'], operation['comment'] = search_payee(
             csv_record[1], payees)
-
-    default_payee = ''
 
     if 'PRZELEW ZEWNĘTRZNY' in csv_record[1]:
         operation['mode'] = 'przelew'
@@ -165,7 +168,7 @@ def create_csv_content(entries, mode):
     return operations
 
 
-def export_operations(payees_file, bank_dump_file, mode):
+def export_operations(payees_file, bank_dump_file, mode, default_payee):
     """Disassemble input, create and return CSV content.
 
     Arguments:
@@ -190,7 +193,7 @@ def export_operations(payees_file, bank_dump_file, mode):
                 process_start = False
 
             if process_start:
-                entry = extract_csv_operation(row, payees_dictionary)
+                entry = extract_csv_operation(row, payees_dictionary, default_payee)
                 entries.append(entry)
 
             if row and row[0] == '#Data operacji':
@@ -201,6 +204,8 @@ def export_operations(payees_file, bank_dump_file, mode):
 
 if __name__ == '__main__':
     ARGUMENTS = parse_args()
+    CONFIG = load_config('config.json')
     OPERATIONS_CSV = export_operations(
-        ARGUMENTS['PAYEES_FILE'], ARGUMENTS['BANK_DUMP_FILE'], ARGUMENTS['MODE'])
+        ARGUMENTS['PAYEES_FILE'], ARGUMENTS['BANK_DUMP_FILE'],
+        ARGUMENTS['MODE'], CONFIG['default_payee'])
     print(OPERATIONS_CSV, end='')
