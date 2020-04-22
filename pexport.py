@@ -1,3 +1,5 @@
+"""BNP Paribas operations importer. Creates files eaten by Skrooge."""
+
 import pandas
 
 import mexport

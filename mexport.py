@@ -10,7 +10,7 @@ def parse_args():
 
     if len(sys.argv) < 3:
         print('Usage:\n\t' + sys.argv[0] + ' payees.csv bank_dump_file')
-        exit(1)
+        sys.exit(1)
         return None
 
     if sys.argv[1] == '-d':
@@ -19,12 +19,12 @@ def parse_args():
             'PAYEES_FILE': sys.argv[2],
             'BANK_DUMP_FILE': sys.argv[3]
         }
-    else:
-        return {
-            'MODE': 'normal',
-            'PAYEES_FILE': sys.argv[1],
-            'BANK_DUMP_FILE': sys.argv[2]
-        }
+
+    return {
+        'MODE': 'normal',
+        'PAYEES_FILE': sys.argv[1],
+        'BANK_DUMP_FILE': sys.argv[2]
+    }
 
 
 def get_payees(filename):
@@ -166,20 +166,20 @@ def create_debug_content(entries):
     for entry in entries[::-1]:
         if not str(entry['mode']) or not str(entry['payee']):
             operations += ('"' + str(entry['date']) + '";'
-                            + '"' + str(entry['bank']) + '";'
-                            + '"' + str(entry['account']) + '";'
-                            + '"' + str(entry['number']) + '";'
-                            + '"' + str(entry['mode']) + '";'
-                            + '"' + str(entry['payee']) + '";'
-                            + '"' + str(entry['comment']) + '";'
-                            + '"' + str(entry['amount']) + '";'
-                            + '"' + str(entry['unit']) + '";'
-                            + '"' + str(entry['amount']) + '";'
-                            + '"' + str(entry['sign']) + '";'
-                            + '"' + str(entry['category']) + '";'
-                            + '"' + str(entry['status']) + '";'
-                            + '"' + str(entry['tracker']) + '";'
-                            + '"' + str(entry['bookmarked']) + '";\n')
+                           + '"' + str(entry['bank']) + '";'
+                           + '"' + str(entry['account']) + '";'
+                           + '"' + str(entry['number']) + '";'
+                           + '"' + str(entry['mode']) + '";'
+                           + '"' + str(entry['payee']) + '";'
+                           + '"' + str(entry['comment']) + '";'
+                           + '"' + str(entry['amount']) + '";'
+                           + '"' + str(entry['unit']) + '";'
+                           + '"' + str(entry['amount']) + '";'
+                           + '"' + str(entry['sign']) + '";'
+                           + '"' + str(entry['category']) + '";'
+                           + '"' + str(entry['status']) + '";'
+                           + '"' + str(entry['tracker']) + '";'
+                           + '"' + str(entry['bookmarked']) + '";\n')
 
     return operations
 
@@ -217,8 +217,8 @@ def export_operations(files):
 
     if files['MODE'] == 'debug':
         return create_debug_content(entries)
-    else:
-        return create_csv_content(entries)
+
+    return create_csv_content(entries)
 
 
 if __name__ == '__main__':
