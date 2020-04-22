@@ -5,7 +5,7 @@ import pandas
 import mexport
 
 
-def export_operations(payees_file, bank_dump_file, mode, default_payee, unwanted_prefix):
+def export_operations(payees_file, bank_dump_file, mode, default_payee, unwanted_prefixes):
     """Disassemble input, create and return CSV content.
 
     Arguments:
@@ -42,7 +42,7 @@ def export_operations(payees_file, bank_dump_file, mode, default_payee, unwanted
         #print(str(record[5]) + ' ' + str(record[2]))
         entry['payee'], entry['category'], \
             entry['mode'], entry['comment'] = mexport.search_payee(
-                str(record[5].replace(unwanted_prefix, '')), payees_dictionary)
+                str(record[5]), payees_dictionary, unwanted_prefixes)
 
         if str(record[5]) == 'nan' and 'Prowizje i opłaty' in str(record[7]):
             entry['payee'] = 'Raiffeisen'
@@ -73,5 +73,5 @@ if __name__ == '__main__':
     CONFIG = mexport.load_config('config.json')
     OPERATIONS_CSV = export_operations(
         ARGUMENTS['payees_file'], ARGUMENTS['bank_dump_file'],
-        ARGUMENTS['mode'], CONFIG['default_payee'], CONFIG['unwanted_prefix'])
+        ARGUMENTS['mode'], CONFIG['default_payee'], CONFIG['unwanted_prefixes'])
     print(OPERATIONS_CSV, end='')

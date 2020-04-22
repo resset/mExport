@@ -48,8 +48,15 @@ def get_payees(filename):
     return payees
 
 
-def search_payee(string, payees):
+def search_payee(string, payees, unwanted_payee_prefixes = []):
     """Searches in current operation data for known payee."""
+
+    for prefix in unwanted_payee_prefixes:
+        prefix_pattern = re.compile(prefix, flags=re.IGNORECASE)
+        new_string = prefix_pattern.sub('', string, count=1)
+        if new_string != string:
+            string = new_string
+            break
 
     payee = ''
     category = ''
