@@ -129,57 +129,38 @@ def extract_csv_operation(csv_record, payees):
     return operation
 
 
-def create_csv_content(entries):
+def create_csv_content_line(entry):
+    return ('"' + str(entry['date']) + '";'
+            + '"' + str(entry['bank']) + '";'
+            + '"' + str(entry['account']) + '";'
+            + '"' + str(entry['number']) + '";'
+            + '"' + str(entry['mode']) + '";'
+            + '"' + str(entry['payee']) + '";'
+            + '"' + str(entry['comment']) + '";'
+            + '"' + str(entry['amount']) + '";'
+            + '"' + str(entry['unit']) + '";'
+            + '"' + str(entry['amount']) + '";'
+            + '"' + str(entry['sign']) + '";'
+            + '"' + str(entry['category']) + '";'
+            + '"' + str(entry['status']) + '";'
+            + '"' + str(entry['tracker']) + '";'
+            + '"' + str(entry['bookmarked']) + '";\n')
+
+
+def create_csv_content(entries, mode):
     """Prepare CSV-formatted string with list of entries."""
 
     operations = ('"date";"bank";"account";"number";"mode";"payee";"comment";'
                   + '"quantity";"unit";"amount";"sign";"category";"status";'
                   + '"tracker";"bookmarked"\n')
 
-    for entry in entries[::-1]:
-        operations += ('"' + str(entry['date']) + '";'
-                       + '"' + str(entry['bank']) + '";'
-                       + '"' + str(entry['account']) + '";'
-                       + '"' + str(entry['number']) + '";'
-                       + '"' + str(entry['mode']) + '";'
-                       + '"' + str(entry['payee']) + '";'
-                       + '"' + str(entry['comment']) + '";'
-                       + '"' + str(entry['amount']) + '";'
-                       + '"' + str(entry['unit']) + '";'
-                       + '"' + str(entry['amount']) + '";'
-                       + '"' + str(entry['sign']) + '";'
-                       + '"' + str(entry['category']) + '";'
-                       + '"' + str(entry['status']) + '";'
-                       + '"' + str(entry['tracker']) + '";'
-                       + '"' + str(entry['bookmarked']) + '";\n')
-
-    return operations
-
-
-def create_debug_content(entries):
-    """Prepare CSV-formatted string with list of entries."""
-
-    operations = ('"date";"bank";"account";"number";"mode";"payee";"comment";'
-                  + '"quantity";"unit";"amount";"sign";"category";"status";'
-                  + '"tracker";"bookmarked"\n')
-
-    for entry in entries[::-1]:
-        if not str(entry['mode']) or not str(entry['payee']):
-            operations += ('"' + str(entry['date']) + '";'
-                           + '"' + str(entry['bank']) + '";'
-                           + '"' + str(entry['account']) + '";'
-                           + '"' + str(entry['number']) + '";'
-                           + '"' + str(entry['mode']) + '";'
-                           + '"' + str(entry['payee']) + '";'
-                           + '"' + str(entry['comment']) + '";'
-                           + '"' + str(entry['amount']) + '";'
-                           + '"' + str(entry['unit']) + '";'
-                           + '"' + str(entry['amount']) + '";'
-                           + '"' + str(entry['sign']) + '";'
-                           + '"' + str(entry['category']) + '";'
-                           + '"' + str(entry['status']) + '";'
-                           + '"' + str(entry['tracker']) + '";'
-                           + '"' + str(entry['bookmarked']) + '";\n')
+    if mode == 'debug':
+        for entry in entries[::-1]:
+            if not str(entry['mode']) or not str(entry['payee']):
+                operations += create_csv_content_line(entry)
+    else:
+        for entry in entries[::-1]:
+            operations += create_csv_content_line(entry)
 
     return operations
 
@@ -215,10 +196,7 @@ def export_operations(payees_file, bank_dump_file, mode):
             if row and row[0] == '#Data operacji':
                 process_start = True
 
-    if mode == 'debug':
-        return create_debug_content(entries)
-
-    return create_csv_content(entries)
+    return create_csv_content(entries, mode)
 
 
 if __name__ == '__main__':

@@ -69,10 +69,7 @@ def export_operations(payees_file, bank_dump_file, mode):
 
         entries.append(entry)
 
-    if mode == 'debug':
-        return mexport.create_debug_content(entries)
-
-    return mexport.create_csv_content(entries)
+    return mexport.create_csv_content(entries, mode)
 
 
 if __name__ == '__main__':
