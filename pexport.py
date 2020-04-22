@@ -72,6 +72,6 @@ if __name__ == '__main__':
     ARGUMENTS = mexport.parse_args()
     CONFIG = mexport.load_config('config.json')
     OPERATIONS_CSV = export_operations(
-        ARGUMENTS['PAYEES_FILE'], ARGUMENTS['BANK_DUMP_FILE'],
-        ARGUMENTS['MODE'], CONFIG['default_payee'], CONFIG['unwanted_prefix'])
+        ARGUMENTS['payees_file'], ARGUMENTS['bank_dump_file'],
+        ARGUMENTS['mode'], CONFIG['default_payee'], CONFIG['unwanted_prefix'])
     print(OPERATIONS_CSV, end='')

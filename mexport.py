@@ -16,15 +16,15 @@ def parse_args():
 
     if sys.argv[1] == '-d':
         return {
-            'MODE': 'debug',
-            'PAYEES_FILE': sys.argv[2],
-            'BANK_DUMP_FILE': sys.argv[3]
+            'mode': 'debug',
+            'payees_file': sys.argv[2],
+            'bank_dump_file': sys.argv[3]
         }
 
     return {
-        'MODE': 'normal',
-        'PAYEES_FILE': sys.argv[1],
-        'BANK_DUMP_FILE': sys.argv[2]
+        'mode': 'normal',
+        'payees_file': sys.argv[1],
+        'bank_dump_file': sys.argv[2]
     }
 
 
@@ -206,6 +206,6 @@ if __name__ == '__main__':
     ARGUMENTS = parse_args()
     CONFIG = load_config('config.json')
     OPERATIONS_CSV = export_operations(
-        ARGUMENTS['PAYEES_FILE'], ARGUMENTS['BANK_DUMP_FILE'],
-        ARGUMENTS['MODE'], CONFIG['default_payee'])
+        ARGUMENTS['payees_file'], ARGUMENTS['bank_dump_file'],
+        ARGUMENTS['mode'], CONFIG['default_payee'])
     print(OPERATIONS_CSV, end='')
