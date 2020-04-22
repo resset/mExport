@@ -13,10 +13,18 @@ def parse_args():
         exit(1)
         return None
 
-    return {
-        'PAYEES_FILE': sys.argv[1],
-        'BANK_DUMP_FILE': sys.argv[2]
-    }
+    if sys.argv[1] == '-d':
+        return {
+            'MODE': 'debug',
+            'PAYEES_FILE': sys.argv[2],
+            'BANK_DUMP_FILE': sys.argv[3]
+        }
+    else:
+        return {
+            'MODE': 'normal',
+            'PAYEES_FILE': sys.argv[1],
+            'BANK_DUMP_FILE': sys.argv[2]
+        }
 
 
 def get_payees(filename):
@@ -148,6 +156,34 @@ def create_csv_content(entries):
     return operations
 
 
+def create_debug_content(entries):
+    """Prepare CSV-formatted string with list of entries."""
+
+    operations = ('"date";"bank";"account";"number";"mode";"payee";"comment";'
+                  + '"quantity";"unit";"amount";"sign";"category";"status";'
+                  + '"tracker";"bookmarked"\n')
+
+    for entry in entries[::-1]:
+        if not str(entry['mode']) or not str(entry['payee']):
+            operations += ('"' + str(entry['date']) + '";'
+                            + '"' + str(entry['bank']) + '";'
+                            + '"' + str(entry['account']) + '";'
+                            + '"' + str(entry['number']) + '";'
+                            + '"' + str(entry['mode']) + '";'
+                            + '"' + str(entry['payee']) + '";'
+                            + '"' + str(entry['comment']) + '";'
+                            + '"' + str(entry['amount']) + '";'
+                            + '"' + str(entry['unit']) + '";'
+                            + '"' + str(entry['amount']) + '";'
+                            + '"' + str(entry['sign']) + '";'
+                            + '"' + str(entry['category']) + '";'
+                            + '"' + str(entry['status']) + '";'
+                            + '"' + str(entry['tracker']) + '";'
+                            + '"' + str(entry['bookmarked']) + '";\n')
+
+    return operations
+
+
 def export_operations(files):
     """Disassemble input, create and return CSV content.
 
@@ -179,7 +215,10 @@ def export_operations(files):
             if row and row[0] == '#Data operacji':
                 process_start = True
 
-    return create_csv_content(entries)
+    if files['MODE'] == 'debug':
+        return create_debug_content(entries)
+    else:
+        return create_csv_content(entries)
 
 
 if __name__ == '__main__':
